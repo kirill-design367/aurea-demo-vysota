@@ -270,36 +270,34 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   background-size: 200px 200px;
 }
 
-/* ═══ ПРИБОР ВЫСОТЫ (altitude rail) ═══════════════════════════════════════ */
+/* ═══ ВЫСОТОМЕР = НАВИГАЦИЯ ════════════════════════════════════════════════
+   Разделы — отметки на шкале. Клик прокручивает к блоку, текущий подсвечен.
+   Это главный интерфейсный элемент сайта. */
 .rail {
   position: fixed;
   z-index: 40;
-  top: 50%;
-  right: clamp(14px, 2.4vw, 40px);
-  transform: translateY(-50%);
-  height: min(62vh, 560px);
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 16px;
-  align-items: stretch;
+  top: 0; bottom: 0;
+  right: clamp(20px, 2.8vw, 52px);
+  width: 1px;
   pointer-events: none;
   color: var(--frost);
 }
 .rail-readout {
-  align-self: start;
+  position: absolute;
+  top: clamp(22px, 2.6vw, 40px);
+  right: 0;
+  width: max-content;
   text-align: right;
-  writing-mode: horizontal-tb;
 }
 .rail-alt {
   font-family: var(--f-mono);
   font-weight: 300;
-  font-size: clamp(1.5rem, 1rem + 1.4vw, 2.3rem);
+  font-size: clamp(1.7rem, 1rem + 1.6vw, 2.5rem);
   line-height: 1;
-  letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums;
   color: var(--frost);
 }
-.rail-alt small { font-size: 0.42em; color: var(--muted); margin-left: 0.4em; letter-spacing: 0.2em; }
+.rail-alt small { font-size: 0.4em; color: var(--muted); margin-left: 0.4em; letter-spacing: 0.2em; }
 .rail-tod {
   margin-top: 8px;
   font-family: var(--f-mono);
@@ -309,47 +307,72 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   color: var(--accent);
 }
 .rail-track {
-  position: relative;
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
   width: 1px;
-  justify-self: end;
-  background: linear-gradient(to bottom, transparent, var(--line-2) 8%, var(--line-2) 92%, transparent);
+  height: min(66vh, 640px);
+  background: linear-gradient(to bottom, transparent, var(--line-2) 5%, var(--line-2) 95%, transparent);
 }
 .rail-tick {
-  position: absolute;
-  right: 0;
-  height: 1px;
-  width: 8px;
-  background: var(--line-2);
-}
-.rail-tick.major { width: 16px; background: var(--glacier-dim); }
-.rail-tick-label {
-  position: absolute;
-  right: 24px;
+  position: absolute; right: 0;
+  width: 6px; height: 1px;
+  background: var(--line);
   transform: translateY(-50%);
-  font-family: var(--f-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.14em;
-  color: var(--muted);
-  white-space: nowrap;
 }
 .rail-caret {
-  position: absolute;
-  right: -3px;
-  top: 0;
-  width: 7px; height: 7px;
+  position: absolute; right: -3.5px; top: 0;
+  width: 8px; height: 8px;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 0 4px rgba(231,169,126,0.14), 0 0 18px var(--accent);
+  box-shadow: 0 0 0 4px rgba(231,169,126,0.14), 0 0 22px var(--accent);
   will-change: transform;
+  z-index: 3;
 }
-.rail-caret::after {
-  content: "";
+
+/* Отметка-раздел = кнопка навигации */
+.rail-mark {
   position: absolute;
-  right: 3px; top: 50%;
-  width: 30px; height: 1px;
+  right: 0;
   transform: translateY(-50%);
-  background: linear-gradient(to left, var(--accent), transparent);
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: 14px;
+  pointer-events: auto;
+  cursor: pointer;
+  color: var(--frost-dim);
+  transition: color 0.35s var(--e-out);
 }
+.mark-dot {
+  width: 7px; height: 7px; flex: none;
+  border-radius: 50%;
+  border: 1px solid var(--glacier-dim);
+  background: var(--night);
+  transition: background 0.35s var(--e-out), border-color 0.35s var(--e-out), box-shadow 0.35s var(--e-out);
+}
+.mark-body {
+  display: flex; align-items: baseline; gap: 9px;
+  white-space: nowrap;
+  transform: translateX(10px);
+  opacity: 0.72;
+  transition: transform 0.4s var(--e-out), opacity 0.4s var(--e-out);
+}
+.mark-label { font-family: var(--f-mono); font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; }
+.mark-alt { font-family: var(--f-mono); font-size: 0.64rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rail-mark i { font-style: normal; font-family: var(--f-mono); font-size: 0.5rem; color: var(--muted); letter-spacing: 0.1em; margin-left: -5px; }
+.rail-mark:hover { color: var(--frost); }
+.rail-mark:hover .mark-body { transform: translateX(0); opacity: 1; }
+.rail-mark:hover .mark-dot { border-color: var(--frost); }
+.rail-mark.active { color: var(--frost); }
+.rail-mark.active .mark-dot { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 14px var(--accent); }
+.rail-mark.active .mark-body { opacity: 1; transform: translateX(0); }
+/* финальная отметка = запись на просмотр (конец маршрута) */
+.rail-mark.cta { color: var(--frost); }
+.rail-mark.cta .mark-label { color: var(--accent); letter-spacing: 0.2em; }
+.rail-mark.cta .mark-dot { width: 9px; height: 9px; border-color: var(--accent); }
+.rail-mark.cta:hover .mark-dot { background: var(--accent); box-shadow: 0 0 16px var(--accent); }
 
 /* ═══ Плейсхолдер изображения (замена реальным фото клиента) ═══════════════ */
 .ph {
@@ -395,73 +418,60 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .reveal { opacity: 0; }
 .reveal-ready { opacity: 0; }
 
-/* ── Магнитная/hover-кнопка ── */
-.btn {
-  --bg: var(--frost);
-  --fg: var(--night);
+/* ── CTA-линия: не капсула. Крупный текст + стрелка, линия прочерчивается
+   акцентом при наведении (конец маршрута = запись). ── */
+.cta-line {
   position: relative;
   display: inline-flex;
-  align-items: center;
-  gap: 0.8em;
-  padding: 1.05em 1.9em;
-  font-family: var(--f-mono);
-  font-size: 0.82rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--fg);
-  background: var(--bg);
-  border-radius: 100px;
-  overflow: hidden;
-  transition: transform 0.5s var(--e-out), box-shadow 0.5s var(--e-out);
-}
-.btn:hover { transform: translateY(-2px); box-shadow: 0 20px 50px -20px rgba(231,169,126,0.5); }
-.btn-ghost {
-  --bg: transparent;
-  --fg: var(--frost);
-  border: 1px solid var(--line-2);
-  transition: border-color 0.4s var(--e-out), transform 0.5s var(--e-out);
-}
-.btn-ghost:hover { border-color: var(--frost); transform: translateY(-2px); }
-
-/* ═══ NAV ═════════════════════════════════════════════════════════════════ */
-.nav {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: clamp(16px, 2vw, 30px) var(--gutter);
-  mix-blend-mode: difference; /* всегда читаем поверх любого неба */
-}
-.nav-brand {
+  align-items: baseline;
+  gap: 0.6em;
+  padding: 0.5em 0 0.85em;
   font-family: var(--f-display);
   font-weight: 400;
-  font-size: 1.5rem;
-  letter-spacing: 0.42em;
-  padding-left: 0.42em;
-  color: #fff;
+  font-size: clamp(1.5rem, 1rem + 1.4vw, 2.2rem);
+  line-height: 1;
+  color: var(--frost);
+  background: none;
+  cursor: pointer;
 }
-.nav-links { display: flex; gap: clamp(20px, 2.4vw, 40px); }
-.nav-link {
-  font-family: var(--f-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: #fff;
-  opacity: 0.85;
-  transition: opacity 0.3s var(--e-out);
+.cta-line-arrow {
+  font-family: var(--f-body);
+  font-size: 0.6em;
+  color: var(--accent);
+  transform: translateY(-0.1em);
+  transition: transform 0.5s var(--e-out);
 }
-.nav-link:hover { opacity: 1; }
-.nav-cta {
-  font-family: var(--f-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+.cta-line:hover .cta-line-arrow { transform: translate(0.35em, -0.4em); }
+.cta-line-rule {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1px;
+  background: var(--line-2);
+  overflow: hidden;
+}
+.cta-line-rule::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.6s var(--e-out);
+}
+.cta-line:hover .cta-line-rule::after { transform: scaleX(1); }
+
+/* ═══ BRAND — минимальный вордмарк (верхнего меню больше нет) ══════════════ */
+.brand {
+  position: fixed;
+  top: clamp(20px, 2.4vw, 38px);
+  left: var(--gutter);
+  z-index: 50;
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 1.55rem;
+  letter-spacing: 0.4em;
+  padding-left: 0.4em;
   color: #fff;
-  padding: 0.7em 1.3em;
-  border: 1px solid rgba(255,255,255,0.5);
-  border-radius: 100px;
+  mix-blend-mode: difference; /* читаем поверх любого неба */
 }
 
 /* ═══ PRELOADER ═══════════════════════════════════════════════════════════ */
@@ -506,36 +516,74 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   background: var(--accent);
 }
 
-/* ═══ HERO ════════════════════════════════════════════════════════════════ */
+/* ═══ HERO — лесенка ВЫСОТА по восходящей диагонали ════════════════════════ */
 .hero {
   position: relative;
   min-height: 100svh;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  padding-bottom: clamp(48px, 9vh, 120px);
+  justify-content: center;
+  padding: clamp(80px, 12vh, 150px) clamp(140px, 14vw, 260px) clamp(80px, 12vh, 150px) var(--gutter);
 }
-.hero-kicker { margin-bottom: clamp(20px, 4vh, 44px); }
-.hero-title {
+.hero-stair {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: clamp(2px, 0.5vw, 10px);
+  padding-bottom: 9vh;
+}
+.step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  /* восходящая диагональ: каждая следующая буква выше предыдущей */
+  transform: translateY(calc(var(--i) * -6.6vh));
+}
+.step-alt {
+  font-family: var(--f-mono);
+  font-size: clamp(0.58rem, 0.48rem + 0.3vw, 0.8rem);
+  letter-spacing: 0.16em;
+  color: var(--accent);
+  margin-bottom: 0.5em;
+  padding-left: 0.12em;
+  white-space: nowrap;
+}
+.step-alt i { font-style: normal; color: var(--muted); margin-left: 0.3em; }
+.step-inner { display: block; overflow: hidden; padding-top: 0.08em; }
+.step-ch {
+  display: block;
   font-family: var(--f-display);
   font-weight: 400;
-  font-size: var(--fs-hero);
-  line-height: 0.86;
-  letter-spacing: 0.02em;
+  font-size: clamp(3.6rem, 1.5rem + 8.4vw, 11.5rem);
+  line-height: 0.8;
+  letter-spacing: -0.005em;
   color: var(--frost);
-  display: flex;
+  will-change: transform;
 }
-.hero-title .ch { display: inline-block; } /* GSAP promotes во время интро, слой не держим постоянно */
-.hero-foot {
-  margin-top: clamp(24px, 5vh, 56px);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 28px;
+/* тонкий профиль склона под лесенкой */
+.hero-rule {
+  position: absolute;
+  left: 0.1em; right: 6%;
+  bottom: 6.5vh;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--line-2) 10%, var(--line-2) 82%, transparent);
+  transform-origin: left;
 }
-.hero-lead { max-width: 42ch; }
-.hero-scroll {
+.hero-sub {
+  position: absolute;
+  right: clamp(150px, 15vw, 280px);
+  bottom: clamp(40px, 8vh, 90px);
+  max-width: 32ch;
+  text-align: right;
+  font-size: var(--fs-1);
+  line-height: 1.55;
+  color: var(--frost-dim);
+}
+.hero-cue {
+  position: absolute;
+  left: var(--gutter);
+  bottom: clamp(28px, 5vh, 52px);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -546,13 +594,13 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   color: var(--frost-dim);
   white-space: nowrap;
 }
-.hero-scroll-line {
+.hero-cue-line {
   position: relative;
   width: 54px; height: 1px;
   background: var(--line-2);
   overflow: hidden;
 }
-.hero-scroll-line::after {
+.hero-cue-line::after {
   content: "";
   position: absolute; inset: 0;
   background: var(--accent);

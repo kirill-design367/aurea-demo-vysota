@@ -1,21 +1,13 @@
 import { NAV } from "@/lib/content";
 
+/*
+  Верхнего меню больше нет — навигация ушла в шкалу высотомера (см. Scene).
+  Остаётся только минимальный вордмарк в углу как присутствие бренда.
+*/
 export default function Nav() {
   return (
-    <header className="nav">
-      <a href="#top" className="nav-brand">
-        {NAV.brand}
-      </a>
-      <nav className="nav-links" aria-label="Разделы">
-        {NAV.links.map((l) => (
-          <a key={l.href} href={l.href} className="nav-link">
-            {l.label}
-          </a>
-        ))}
-      </nav>
-      <a href="#final" className="nav-cta">
-        {NAV.cta}
-      </a>
-    </header>
+    <a href="#top" className="brand">
+      {NAV.brand}
+    </a>
   );
 }

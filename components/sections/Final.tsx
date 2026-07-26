@@ -34,9 +34,10 @@ export default function Final() {
               <label htmlFor="phone">{FINAL.form.phoneLabel}</label>
               <input id="phone" name="phone" type="tel" placeholder={FINAL.form.phonePlaceholder} autoComplete="tel" />
             </div>
-            <button type="button" className="btn">
-              {FINAL.form.submit}
-              <span aria-hidden="true">↗</span>
+            <button type="button" className="cta-line">
+              <span className="cta-line-text">{FINAL.form.submit}</span>
+              <span className="cta-line-arrow" aria-hidden="true">↗</span>
+              <span className="cta-line-rule" aria-hidden="true" />
             </button>
             <p className="form-note">{FINAL.form.note}</p>
           </form>
