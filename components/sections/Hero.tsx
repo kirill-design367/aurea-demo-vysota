@@ -39,24 +39,12 @@ export default function Hero() {
         })
           .from(".step-alt", { autoAlpha: 0, duration: 0.6, stagger: 0.13 }, 0.25)
           .from(".hero-sub", { y: 22, autoAlpha: 0, duration: 1 }, "-=0.5")
-          .from(".hero-cue", { autoAlpha: 0, duration: 0.9 }, "-=0.6")
-          .from(".hero-rule", { scaleX: 0, duration: 1.1, ease: "power3.inOut" }, "-=0.9");
+          .from(".hero-cue", { autoAlpha: 0, duration: 0.9 }, "-=0.6");
       };
 
-      const flagged = (window as unknown as { __vysotaReady?: boolean }).__vysotaReady;
-      if (flagged) {
-        play();
-      } else {
-        window.addEventListener("vysota:enter", play, { once: true });
-        const t = window.setTimeout(() => {
-          window.removeEventListener("vysota:enter", play);
-          play();
-        }, 4200);
-        return () => {
-          window.removeEventListener("vysota:enter", play);
-          window.clearTimeout(t);
-        };
-      }
+      // Прелоадера нет — интро играем сразу на маунте (дадим кадру устаканиться).
+      const t = window.setTimeout(play, 220);
+      return () => window.clearTimeout(t);
     },
     { scope: root }
   );
@@ -77,14 +65,13 @@ export default function Hero() {
             </span>
           </div>
         ))}
-        <span className="hero-rule" aria-hidden="true" />
       </div>
 
       <p className="hero-sub">{HERO.lead}</p>
 
       <div className="hero-cue">
         <span>{HERO.scrollHint}</span>
-        <span className="hero-cue-line" />
+        <span className="hero-cue-arrow" aria-hidden="true">↓</span>
       </div>
     </section>
   );

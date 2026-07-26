@@ -37,7 +37,6 @@ export default function Final() {
             <button type="button" className="cta-line">
               <span className="cta-line-text">{FINAL.form.submit}</span>
               <span className="cta-line-arrow" aria-hidden="true">↗</span>
-              <span className="cta-line-rule" aria-hidden="true" />
             </button>
             <p className="form-note">{FINAL.form.note}</p>
           </form>

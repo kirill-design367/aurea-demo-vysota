@@ -1,5 +1,4 @@
 import SmoothScroll from "@/components/SmoothScroll";
-import Preloader from "@/components/Preloader";
 import Scene from "@/components/Scene";
 import Nav from "@/components/Nav";
 import Hero from "@/components/sections/Hero";
@@ -13,7 +12,6 @@ import { SITE, NAV } from "@/lib/content";
 export default function Page() {
   return (
     <SmoothScroll>
-      <Preloader />
       <Scene />
       <Nav />
 

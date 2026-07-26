@@ -38,7 +38,7 @@ export default function Placeholder({
         <img
           src={resolvedSrc}
           alt={label}
-          loading="lazy"
+          loading="eager"
           onLoad={() => setLoaded(true)}
           onError={() => setFailed(true)}
           style={{

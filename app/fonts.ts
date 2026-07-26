@@ -1,27 +1,24 @@
-import { Prata, Golos_Text, JetBrains_Mono } from "next/font/google";
+import { Yeseva_One, Literata, JetBrains_Mono } from "next/font/google";
 
 /*
-  Типографика ВЫСОТА v2 — премиум под видовую недвижимость, кириллица проверена
-  (включая Ё и заглавные), self-host через next/font.
+  Типографика ВЫСОТА v3 — характер вместо дефолта, кириллица проверена (Ё, заглавные).
 
-  — Prata: высококонтрастная антиква в духе Didone. Тонкие волосяные штрихи +
-    крупные засечки = «дорого и уверенно», фэшн-люкс. Дисплей/заголовки.
-    Родная кириллица (ParaType), Ё есть. Один вес — работаем масштабом и
-    трекингом, без синтетического курсива.
-  — Golos Text: чистый гуманистический гротеск (ParaType), безупречная
-    кириллица, спокойный и отлично читаемый. Текст/UI.
-  — JetBrains Mono: моноширинный «приборный» — отметки высоты и метки.
+  — Yeseva One: благородная антиква с высоким контрастом штриха. Дисплей/заголовки.
+    Родная кириллица (Jovanny Lemonad). Не Cormorant, не «первая страница Google».
+  — Literata: книжная серифная с индивидуальностью, отрисована для экрана и
+    отлично читается в мелком кегле (описания, характеристики). Кириллица есть.
+  — JetBrains Mono: приборный моноширинный для отметок высоты и меток.
 */
-export const display = Prata({
+export const display = Yeseva_One({
   subsets: ["latin", "cyrillic"],
   weight: ["400"],
   variable: "--font-display",
   display: "swap",
 });
 
-export const body = Golos_Text({
+export const body = Literata({
   subsets: ["latin", "cyrillic"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
   variable: "--font-body",
   display: "swap",
 });
