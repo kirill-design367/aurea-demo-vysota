@@ -1,33 +1,24 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger, registerGsap } from "@/lib/gsap";
 import { SITE } from "@/lib/content";
 import AtmosphereParticles from "./AtmosphereParticles";
 
-/* Силуэты гряд (viewBox 1440×600), от дальней к ближней. */
-const RIDGES: { cls: string; fill: string; d: string }[] = [
-  {
-    cls: "ridge-far",
-    fill: "rgba(96,120,142,0.5)",
-    d: "M0,340 L160,318 L300,346 L460,300 L620,338 L780,292 L940,330 L1100,296 L1260,332 L1440,306 L1440,600 L0,600Z",
-  },
-  {
-    cls: "ridge-mid",
-    fill: "rgba(52,72,94,0.72)",
-    d: "M0,318 L120,286 L260,320 L380,246 L520,300 L660,214 L800,286 L940,232 L1080,296 L1240,236 L1380,290 L1440,268 L1440,600 L0,600Z",
-  },
-  {
-    cls: "ridge-near",
-    fill: "rgba(22,32,44,0.92)",
-    d: "M0,300 L110,244 L240,296 L360,196 L470,268 L600,110 L720,258 L840,182 L980,272 L1120,168 L1260,268 L1380,196 L1440,252 L1440,600 L0,600Z",
-  },
-  {
-    cls: "ridge-fore",
-    fill: "#060a10",
-    d: "M0,470 L180,436 L360,470 L540,428 L760,470 L980,436 L1200,472 L1440,442 L1440,600 L0,600Z",
-  },
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
+/*
+  Слои фотопараллакса (прозрачные PNG, кладутся в public/layers/).
+  Порядок в DOM — от дальнего к ближнему; туман между хребтом и лесом.
+  y — амплитуда вертикального параллакса (%) на всю дистанцию скролла:
+  дальние пики почти неподвижны, передний склон летит.
+*/
+const LAYERS: { key: string; src: string; cls: string; y: number; drift?: number }[] = [
+  { key: "peaks", src: "/layers/layer-1-peaks.png", cls: "pl-peaks", y: -9 },
+  { key: "ridge", src: "/layers/layer-2-ridge.png", cls: "pl-ridge", y: -20 },
+  { key: "fog", src: "/layers/layer-4-fog.png", cls: "pl-fog", y: -30, drift: 8 },
+  { key: "forest", src: "/layers/layer-3-forest.png", cls: "pl-forest", y: -44 },
 ];
 
 const TOD = ["Рассвет", "Утро", "Золотой час", "Закат"];
@@ -43,9 +34,23 @@ for (let a = SITE.altTop; a >= SITE.altBottom; a -= STEP) {
   });
 }
 
-// Один кэшированный форматтер — не создаём Intl на каждом кадре скролла.
+// Кэшированный форматтер — не создаём Intl на каждом кадре скролла.
 const NF = typeof Intl !== "undefined" ? new Intl.NumberFormat("ru-RU") : null;
-const fmt = (n: number) => (NF ? NF.format(n) : String(n)).replace(/ /g, " ");
+const fmt = (n: number) => (NF ? NF.format(n) : String(n)).replace(/ /g, " ");
+
+/* Слой-фото с graceful-падением: пока файла нет — пусто (виден туман/дымка/небо),
+   как только PNG появится в /layers — подхватится сам, кроп уже задан в CSS. */
+function Layer({ src, cls }: { src: string; cls: string }) {
+  const [ok, setOk] = useState(true);
+  return (
+    <div className={`player ${cls}`}>
+      {ok && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={BASE + src} alt="" draggable={false} onError={() => setOk(false)} />
+      )}
+    </div>
+  );
+}
 
 export default function Scene() {
   const root = useRef<HTMLDivElement>(null);
@@ -56,19 +61,20 @@ export default function Scene() {
   useGSAP(
     () => {
       registerGsap();
-      const mm = gsap.matchMedia();
 
-      // Обновление прибора высоты — дёшево, только текст + transform каретки.
+      // Прибор высоты — дёшево: текст только при изменении + transform каретки.
       let trackH = 0;
       const measure = () => {
         const track = caretRef.current?.parentElement;
         trackH = track ? track.clientHeight : 0;
       };
+      measure();
+      ScrollTrigger.addEventListener("refreshInit", measure);
+
       let lastTod = -1;
       let lastAlt = -1;
       const updateRail = (p: number) => {
         const alt = Math.round(SITE.altTop + (SITE.altBottom - SITE.altTop) * p);
-        // Форматируем и пишем в DOM только когда число реально изменилось.
         if (alt !== lastAlt) {
           if (altRef.current) altRef.current.textContent = fmt(alt);
           lastAlt = alt;
@@ -83,96 +89,59 @@ export default function Scene() {
         }
       };
 
-      mm.add(
-        {
-          isDesktop: "(min-width: 768px)",
-          isMobile: "(max-width: 767px)",
-          reduce: "(prefers-reduced-motion: reduce)",
+      const tl = gsap.timeline({
+        defaults: { ease: "none" },
+        scrollTrigger: {
+          trigger: document.documentElement,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 1,
+          invalidateOnRefresh: true,
+          onUpdate: (self) => updateRail(self.progress),
+          onRefresh: (self) => updateRail(self.progress),
         },
-        (ctx) => {
-          const { isMobile, reduce } = ctx.conditions as {
-            isMobile: boolean;
-            reduce: boolean;
-          };
+      });
 
-          measure();
-          ScrollTrigger.addEventListener("refreshInit", measure);
+      // Общая длительность = 1 (позиции = доля скролла).
+      tl.to({}, { duration: 1 }, 0);
 
-          if (reduce) {
-            // Статика: ясный день, без параллакса и смены света. Прибор высоты
-            // всё же отслеживает нативный скролл (обновление числа — не «движение»).
-            gsap.set(".sky-dawn", { opacity: 0 });
-            gsap.set(".sky-day", { opacity: 1 });
-            const onScroll = () => {
-              const max = document.documentElement.scrollHeight - window.innerHeight;
-              updateRail(max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0);
-            };
-            onScroll();
-            window.addEventListener("scroll", onScroll, { passive: true });
-            return () => {
-              window.removeEventListener("scroll", onScroll);
-              ScrollTrigger.removeEventListener("refreshInit", measure);
-            };
-          }
+      // Небо: рассвет → день → золото → закат (кросс-фейд по opacity — свет-источник).
+      tl.to(".sky-day", { opacity: 1, duration: 0.3 }, 0.05)
+        .to(".sky-dawn", { opacity: 0, duration: 0.3 }, 0.05)
+        .to(".sky-gold", { opacity: 1, duration: 0.28 }, 0.44)
+        .to(".sky-day", { opacity: 0, duration: 0.28 }, 0.44)
+        .to(".sky-dusk", { opacity: 1, duration: 0.3 }, 0.72)
+        .to(".sky-gold", { opacity: 0, duration: 0.3 }, 0.72);
 
-          const k = isMobile ? 0.55 : 1; // множитель амплитуды параллакса
+      // Свет НА фотослоях — цветокоррекция наложением (blend), той же дугой времени.
+      tl.to(".grade-day", { opacity: 1, duration: 0.3 }, 0.05)
+        .to(".grade-dawn", { opacity: 0, duration: 0.3 }, 0.05)
+        .to(".grade-gold", { opacity: 1, duration: 0.28 }, 0.44)
+        .to(".grade-day", { opacity: 0, duration: 0.28 }, 0.44)
+        .to(".grade-dusk", { opacity: 1, duration: 0.3 }, 0.72)
+        .to(".grade-gold", { opacity: 0, duration: 0.3 }, 0.72);
 
-          const tl = gsap.timeline({
-            defaults: { ease: "none" },
-            scrollTrigger: {
-              trigger: document.documentElement,
-              start: "top top",
-              end: "bottom bottom",
-              scrub: isMobile ? 0.5 : 1,
-              invalidateOnRefresh: true,
-              onUpdate: (self) => updateRail(self.progress),
-              onRefresh: (self) => updateRail(self.progress),
-            },
-          });
+      // Солнце проявляется к золотому часу и садится.
+      tl.to(".sun", { opacity: 0.95, duration: 0.35 }, 0.4)
+        .to(".sun", { opacity: 0.4, duration: 0.25 }, 0.82)
+        .to(".sun", { yPercent: 26, duration: 0.62 }, 0.4);
 
-          // Держим общую длительность таймлайна = 1 (позиции = доля скролла).
-          tl.to({}, { duration: 1 }, 0);
+      // Фотослои — сквозной вертикальный параллакс, разная скорость = глубина.
+      LAYERS.forEach((L) => tl.to("." + L.cls, { yPercent: L.y, duration: 1 }, 0));
+      // Дымка-плейсхолдер (пока нет фото) тоже уходит по скроллу.
+      tl.to(".haze-1", { yPercent: -18, duration: 1 }, 0).to(".haze-2", { yPercent: -40, duration: 1 }, 0);
 
-          // Небо: рассвет → день → золото → закат (кросс-фейд по opacity).
-          tl.to(".sky-day", { opacity: 1, duration: 0.3 }, 0.05)
-            .to(".sky-dawn", { opacity: 0, duration: 0.3 }, 0.05)
-            .to(".sky-gold", { opacity: 1, duration: 0.28 }, 0.44)
-            .to(".sky-day", { opacity: 0, duration: 0.28 }, 0.44)
-            .to(".sky-dusk", { opacity: 1, duration: 0.3 }, 0.72)
-            .to(".sky-gold", { opacity: 0, duration: 0.3 }, 0.72);
+      // Живой дрейф тумана/дымки (не привязан к скроллу) — только transform.
+      const drift = [
+        gsap.to(".pl-fog", { xPercent: 8, duration: 32, repeat: -1, yoyo: true, ease: "sine.inOut" }),
+        gsap.to(".haze-1", { xPercent: 10, duration: 30, repeat: -1, yoyo: true, ease: "sine.inOut" }),
+        gsap.to(".haze-2", { xPercent: -13, duration: 42, repeat: -1, yoyo: true, ease: "sine.inOut" }),
+      ];
 
-          // Солнце проявляется к золотому часу и опускается за горизонт.
-          tl.to(".sun", { opacity: 0.9, duration: 0.35 }, 0.4)
-            .to(".sun", { opacity: 0.35, duration: 0.25 }, 0.82)
-            .to(".sun", { yPercent: 26, duration: 0.62 }, 0.4);
-
-          // Гряды — сквозной параллакс (вся дистанция), разная глубина.
-          tl.to(".ridge-far", { yPercent: -3 * k, duration: 1 }, 0)
-            .to(".ridge-mid", { yPercent: -6 * k, duration: 1 }, 0)
-            .to(".ridge-near", { yPercent: -11 * k, duration: 1 }, 0)
-            .to(".ridge-fore", { yPercent: -18 * k, duration: 1 }, 0);
-
-          // Туман — параллакс по вертикали.
-          tl.to(".fog-1", { yPercent: -34 * k, duration: 1 }, 0)
-            .to(".fog-2", { yPercent: -64 * k, duration: 1 }, 0);
-
-          // Живой дрейф тумана (не привязан к скроллу) — воздух даже в покое.
-          // ТОЛЬКО transform (translate готового размытого слоя) — без анимации
-          // opacity, чтобы blended-слой не рекомпозитился на каждом кадре в покое.
-          const drift: gsap.core.Tween[] = [];
-          if (!isMobile) {
-            drift.push(
-              gsap.to(".fog-1", { xPercent: 10, duration: 28, repeat: -1, yoyo: true, ease: "sine.inOut" }),
-              gsap.to(".fog-2", { xPercent: -14, duration: 36, repeat: -1, yoyo: true, ease: "sine.inOut" })
-            );
-          }
-
-          return () => {
-            ScrollTrigger.removeEventListener("refreshInit", measure);
-            drift.forEach((t) => t.kill());
-          };
-        }
-      );
+      return () => {
+        ScrollTrigger.removeEventListener("refreshInit", measure);
+        drift.forEach((t) => t.kill());
+      };
     },
     { scope: root }
   );
@@ -181,27 +150,30 @@ export default function Scene() {
     <div ref={root} aria-hidden="true">
       {/* ── Фон-пейзаж ── */}
       <div className="scene">
+        {/* Небо — свет-источник */}
         <div className="sky sky-dawn" />
         <div className="sky sky-day" />
         <div className="sky sky-gold" />
         <div className="sky sky-dusk" />
         <div className="sun" />
 
-        <div className="ridge ridge-far">
-          <RidgeSvg d={RIDGES[0].d} fill={RIDGES[0].fill} />
-        </div>
-        <div className="fog fog-1" />
-        <div className="ridge ridge-mid">
-          <RidgeSvg d={RIDGES[1].d} fill={RIDGES[1].fill} />
-        </div>
-        <div className="ridge ridge-near">
-          <RidgeSvg d={RIDGES[2].d} fill={RIDGES[2].fill} />
-        </div>
-        <div className="fog fog-2" />
-        <div className="ridge ridge-fore">
-          <RidgeSvg d={RIDGES[3].d} fill={RIDGES[3].fill} />
-        </div>
+        {/* Дымка-подложка (атмосфера + плейсхолдер до загрузки фотослоёв) */}
+        <div className="haze haze-1" />
 
+        {/* Фотослои: пики → хребет → туман → лес */}
+        <Layer src={LAYERS[0].src} cls={LAYERS[0].cls} />
+        <Layer src={LAYERS[1].src} cls={LAYERS[1].cls} />
+        <div className="haze haze-2" />
+        <Layer src={LAYERS[2].src} cls={LAYERS[2].cls} />
+        <Layer src={LAYERS[3].src} cls={LAYERS[3].cls} />
+
+        {/* Цветокоррекция света на фотослоях (blend) */}
+        <div className="grade grade-dawn" />
+        <div className="grade grade-day" />
+        <div className="grade grade-gold" />
+        <div className="grade grade-dusk" />
+
+        <div className="scene-floor" />
         <div className="scene-vignette" />
         <AtmosphereParticles />
       </div>
@@ -235,13 +207,5 @@ export default function Scene() {
         </div>
       </div>
     </div>
-  );
-}
-
-function RidgeSvg({ d, fill }: { d: string; fill: string }) {
-  return (
-    <svg viewBox="0 0 1440 600" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-      <path d={d} fill={fill} />
-    </svg>
   );
 }

@@ -106,7 +106,7 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 }
 
 /* ── Типо-утилиты ── */
-.display { font-family: var(--f-display); font-weight: 300; line-height: var(--lh-head); letter-spacing: -0.01em; }
+.display { font-family: var(--f-display); font-weight: 400; line-height: var(--lh-head); letter-spacing: -0.01em; }
 .mono { font-family: var(--f-mono); }
 
 .eyebrow {
@@ -132,7 +132,7 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   font-size: var(--fs-2);
   line-height: 1.5;
   color: var(--frost-dim);
-  font-weight: 300;
+  font-weight: 400;
 }
 
 /* Scrim — читаемость текста поверх пейзажа */
@@ -195,24 +195,55 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   will-change: opacity, transform;
 }
 
-/* Гряды гор — SVG, прижаты к низу, разная глубина */
-.ridge {
+/* ── Фотослои параллакса — прозрачные PNG из /public/layers, прижаты к низу.
+   Пока файла нет, слой пуст (виден туман/дымка/небо); появится PNG — подхватится
+   сам. Разная скорость по скроллу (см. Scene.tsx) = настоящая глубина. ── */
+.player {
   position: absolute;
-  left: -6%; right: -6%; bottom: 0;
+  left: -6%; right: -6%;
   width: 112%;
   will-change: transform;
 }
-.ridge svg { width: 100%; height: auto; display: block; }
+.player img { width: 100%; height: auto; display: block; user-select: none; }
+.pl-peaks  { bottom: -6vh;  filter: saturate(0.82) brightness(0.92); }
+.pl-ridge  { bottom: -10vh; }
+.pl-forest { bottom: -20vh; }
+.pl-fog    { bottom: 4vh; left: -22%; right: -22%; width: 144%; opacity: 0.85; mix-blend-mode: screen; }
 
-/* Туман — размытые полосы, дрейфуют между грядами */
-.fog {
+/* Дымка-подложка: атмосфера + аккуратный плейсхолдер до загрузки фотослоёв */
+.haze {
   position: absolute;
-  left: -20%; right: -20%;
-  height: 40vh;
+  left: -25%; right: -25%;
+  height: 55vh;
   will-change: transform, opacity;
-  filter: blur(30px);
-  background: radial-gradient(60% 100% at 50% 50%, rgba(210,224,232,0.5), rgba(180,200,214,0.12) 55%, transparent 78%);
+  filter: blur(40px);
   mix-blend-mode: screen;
+}
+.haze-1 { top: 28%; opacity: 0.42;
+  background: radial-gradient(60% 100% at 50% 55%, rgba(200,216,228,0.5), rgba(160,186,204,0.12) 55%, transparent 78%); }
+.haze-2 { top: 55%; height: 62vh; opacity: 0.34;
+  background: radial-gradient(70% 100% at 45% 50%, rgba(214,224,232,0.55), rgba(170,192,208,0.14) 52%, transparent 76%); }
+
+/* Свет НА фотослоях — цветокоррекция наложением (blend), кросс-фейд по скроллу.
+   Тонирует композит фотослоёв под время суток, а не перекрашивает рисунок. */
+.grade { position: absolute; inset: 0; will-change: opacity; }
+.grade-dawn { opacity: 1; mix-blend-mode: soft-light;
+  background: linear-gradient(to top, rgba(60,74,104,0.85), rgba(96,86,120,0.5) 55%, rgba(120,110,140,0.35)); }
+.grade-day { opacity: 0; mix-blend-mode: soft-light;
+  background: linear-gradient(to top, rgba(150,180,200,0.35), rgba(120,150,175,0.2) 60%, transparent); }
+.grade-gold { opacity: 0; mix-blend-mode: overlay;
+  background:
+    radial-gradient(80% 70% at 62% 102%, rgba(240,170,90,0.8), transparent 62%),
+    linear-gradient(to top, rgba(210,130,70,0.6), rgba(180,120,90,0.28) 55%, transparent); }
+.grade-dusk { opacity: 0; mix-blend-mode: overlay;
+  background:
+    radial-gradient(80% 70% at 66% 104%, rgba(230,120,60,0.85), transparent 58%),
+    linear-gradient(to top, rgba(150,50,55,0.6), rgba(90,40,70,0.35) 55%, transparent); }
+
+/* Тёмная «земля» у нижней кромки — заземляет кадр и прячет край слоёв */
+.scene-floor {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 40vh;
+  background: linear-gradient(to top, var(--night) 3%, rgba(5,7,11,0.55) 42%, transparent);
 }
 
 /* Виньетка кадра — кинематографичность */
@@ -223,9 +254,6 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
     linear-gradient(to bottom, rgba(5,7,11,0.35), transparent 22%, transparent 78%, rgba(5,7,11,0.55));
   mix-blend-mode: multiply;
 }
-
-.fog-1 { top: 40%; opacity: 0.42; }
-.fog-2 { top: 62%; height: 46vh; opacity: 0.3; }
 
 /* Атмосферные частицы (canvas) */
 .atmos { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -408,13 +436,13 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 }
 .nav-brand {
   font-family: var(--f-display);
-  font-weight: 500;
-  font-size: 1.35rem;
+  font-weight: 400;
+  font-size: 1.5rem;
   letter-spacing: 0.42em;
   padding-left: 0.42em;
   color: #fff;
 }
-.nav-links { display: none; gap: clamp(20px, 2.4vw, 40px); }
+.nav-links { display: flex; gap: clamp(20px, 2.4vw, 40px); }
 .nav-link {
   font-family: var(--f-mono);
   font-size: 0.72rem;
@@ -435,7 +463,6 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   border: 1px solid rgba(255,255,255,0.5);
   border-radius: 100px;
 }
-@media (min-width: 900px) { .nav-links { display: flex; } }
 
 /* ═══ PRELOADER ═══════════════════════════════════════════════════════════ */
 .preloader {
@@ -491,7 +518,7 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .hero-kicker { margin-bottom: clamp(20px, 4vh, 44px); }
 .hero-title {
   font-family: var(--f-display);
-  font-weight: 300;
+  font-weight: 400;
   font-size: var(--fs-hero);
   line-height: 0.86;
   letter-spacing: 0.02em;
@@ -543,7 +570,7 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .manifesto { min-height: 96svh; display: flex; align-items: center; }
 .manifesto-lines {
   font-family: var(--f-display);
-  font-weight: 300;
+  font-weight: 400;
   font-size: var(--fs-5);
   line-height: 1.02;
   letter-spacing: -0.015em;
@@ -552,8 +579,8 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .manifesto-lines .ln { display: block; overflow: hidden; }
 .manifesto-lines .ln > span { display: inline-block; }
 .manifesto-lines em {
-  font-style: italic;
   color: var(--accent);
+  font-style: normal;
 }
 .manifesto-body {
   margin-top: clamp(32px, 6vh, 64px);
@@ -563,18 +590,16 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 
 /* ═══ LEVELS ══════════════════════════════════════════════════════════════ */
 .levels-head { display: grid; gap: 20px; margin-bottom: clamp(48px, 8vh, 110px); max-width: 900px; }
-.levels-head h2 { font-family: var(--f-display); font-weight: 300; font-size: var(--fs-4); line-height: 1.05; }
+.levels-head h2 { font-family: var(--f-display); font-weight: 400; font-size: var(--fs-4); line-height: 1.05; }
 .house {
   display: grid;
-  gap: clamp(28px, 4vw, 64px);
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(40px, 5vw, 96px);
   align-items: center;
-  padding-block: clamp(60px, 12vh, 150px);
+  padding-block: clamp(80px, 13vh, 180px);
 }
 .house + .house { border-top: 1px solid var(--line); }
-@media (min-width: 900px) {
-  .house { grid-template-columns: 1fr 1fr; }
-  .house.flip .house-media { order: 2; }
-}
+.house.flip .house-media { order: 2; }
 .house-media {
   position: relative;
   aspect-ratio: 4 / 5;
@@ -602,7 +627,6 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .house-alt small { font-size: 0.28em; color: var(--muted); letter-spacing: 0.2em; margin-left: 0.5em; }
 .house-name {
   font-family: var(--f-display);
-  font-style: italic;
   font-weight: 400;
   font-size: var(--fs-3);
   color: var(--frost);
@@ -633,42 +657,38 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 
 /* ═══ ARCHITECTURE ════════════════════════════════════════════════════════ */
 .arch-head { max-width: 720px; margin-bottom: clamp(40px, 7vh, 90px); }
-.arch-head h2 { font-family: var(--f-display); font-weight: 300; font-size: var(--fs-4); line-height: 1.04; margin: 0.4em 0 0.5em; }
+.arch-head h2 { font-family: var(--f-display); font-weight: 400; font-size: var(--fs-4); line-height: 1.04; margin: 0.4em 0 0.5em; }
 .arch-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: clamp(16px, 2.2vw, 30px);
+  grid-template-columns: repeat(2, 1fr);
+  gap: clamp(20px, 2.2vw, 36px);
 }
-@media (min-width: 760px) { .arch-grid { grid-template-columns: repeat(2, 1fr); } }
 .arch-shot { position: relative; border-radius: 4px; overflow: hidden; will-change: transform; }
 .arch-shot .ph { position: absolute; inset: 0; }
 .arch-shot.wide { aspect-ratio: 10 / 7; }
 .arch-shot.tall { aspect-ratio: 7 / 9; }
-@media (min-width: 760px) { .arch-shot.span2 { grid-column: span 2; } }
+.arch-shot.span2 { grid-column: span 2; }
 
 /* ═══ INFRA ═══════════════════════════════════════════════════════════════ */
 .infra-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: clamp(36px, 6vh, 72px); }
-.infra-head h2 { font-family: var(--f-display); font-weight: 300; font-size: var(--fs-4); }
+.infra-head h2 { font-family: var(--f-display); font-weight: 400; font-size: var(--fs-4); }
 .infra-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(3, 1fr);
   border-top: 1px solid var(--line);
 }
-@media (min-width: 680px) { .infra-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 1040px) { .infra-grid { grid-template-columns: repeat(3, 1fr); } }
 .infra-item {
   padding: clamp(28px, 4vh, 48px) clamp(20px, 2.6vw, 40px) clamp(28px, 4vh, 48px) 0;
   border-bottom: 1px solid var(--line);
 }
-.infra-item h3 { font-family: var(--f-display); font-style: italic; font-weight: 400; font-size: var(--fs-2); margin-bottom: 0.5em; color: var(--frost); }
+.infra-item h3 { font-family: var(--f-display); font-weight: 400; font-size: var(--fs-2); margin-bottom: 0.5em; color: var(--frost); }
 .infra-item p { color: var(--frost-dim); font-size: 0.98rem; }
 .infra-num { font-family: var(--f-mono); font-size: 0.68rem; letter-spacing: 0.2em; color: var(--accent); display: block; margin-bottom: 1.4em; }
 
 /* ═══ FINAL ═══════════════════════════════════════════════════════════════ */
 .final { min-height: 100svh; display: flex; align-items: center; padding-block: clamp(80px, 12vh, 160px); }
-.final-grid { display: grid; gap: clamp(40px, 6vw, 100px); align-items: start; }
-@media (min-width: 900px) { .final-grid { grid-template-columns: 1.1fr 0.9fr; } }
-.final h2 { font-family: var(--f-display); font-weight: 300; font-size: var(--fs-5); line-height: 1; letter-spacing: -0.01em; margin: 0.35em 0 0.6em; }
+.final-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: clamp(40px, 6vw, 100px); align-items: start; }
+.final h2 { font-family: var(--f-display); font-weight: 400; font-size: var(--fs-5); line-height: 1; letter-spacing: -0.01em; margin: 0.35em 0 0.6em; }
 .final-body { max-width: 46ch; }
 .form { display: grid; gap: 22px; }
 .field { display: grid; gap: 10px; }
@@ -704,32 +724,6 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 }
 .footer .footer-brand { font-family: var(--f-display); font-size: 1.4rem; letter-spacing: 0.3em; color: var(--frost-dim); }
 
-/* ═══ Мобильный прибор высоты ═════════════════════════════════════════════ */
-@media (max-width: 767px) {
-  .rail {
-    top: auto;
-    bottom: 14px;
-    right: 14px;
-    left: 14px;
-    transform: none;
-    height: auto;
-    grid-template-columns: 1fr;
-    gap: 0;
-    justify-items: end;
-  }
-  .rail-track { display: none; }
-  .rail-readout {
-    display: flex; align-items: baseline; gap: 14px;
-    padding: 8px 12px;
-    background: rgba(5,7,11,0.5);
-    backdrop-filter: blur(6px);
-    border: 1px solid var(--line);
-    border-radius: 100px;
-  }
-  .rail-alt { font-size: 1.15rem; }
-  .rail-tod { margin-top: 0; }
-}
-
 /* ── Доступность: видимый фокус клавиатуры ── */
 :focus-visible {
   outline: 2px solid var(--accent);
@@ -738,19 +732,5 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 }
 .field input:focus-visible { outline: none; } /* у полей — своя подсветка нижней линии */
 
-/* ── Мобильная экономия GPU: дешевле туман, без плёночного зерна ── */
-@media (max-width: 767px) {
-  .fog { filter: blur(12px); mix-blend-mode: normal; opacity: 0.28; }
-  .grain { display: none; }
-}
-@media (pointer: coarse) {
-  .grain { display: none; } /* blend-слой поверх движущегося фона — дорого на тач */
-}
-
-/* ── Reduced motion: статика, без параллакса и дрейфа ── */
-@media (prefers-reduced-motion: reduce) {
-  .reveal, .reveal-ready { opacity: 1 !important; transform: none !important; }
-  .fog { display: none; }
-  .atmos { display: none; }
-  * { scroll-behavior: auto !important; }
-}
+/* Демо для портфолио: ТОЛЬКО десктоп. Мобильная версия и prefers-reduced-motion
+   намеренно не реализуются — всё внимание в вау-эффект на большом экране. */
