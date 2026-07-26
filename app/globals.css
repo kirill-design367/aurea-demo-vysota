@@ -505,17 +505,19 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 }
 
 /* ═══ HERO — видео-кадр во весь экран (бумеранг-фон) ═══════════════════════
-   Палитра кадра — холодная горная: светлый туман, графитовый текст, ледяной
-   акцент на ключевом слове. Стеклянная навигация, снизу CTA и отметка высоты. */
+   Реальный ролик — тёмный драматичный кадр «над облаками». Поверх — затемнение
+   + шумовая текстура для читаемости и чтобы 720p не бросалось в глаза. Текст
+   светлый, ключевое слово — холодный лёд. Знак-звёздочка генератора вычищен из
+   пикселей ролика (ffmpeg delogo), в кадре его нет. */
 .hero-v {
   position: relative;
   min-height: 100svh;
   overflow: hidden;
   isolation: isolate;
-  color: #1b232d;                 /* графит — базовый текст кадра */
+  color: #eef3f7;                 /* светлый текст поверх тёмного видео */
 }
 
-/* ── фон: видео + холодный CSS-туман под ним + затемняющий скрим ── */
+/* ── фон: видео + тёмный CSS-фон под ним + скрим + шум ── */
 .hero-v-bg { position: absolute; inset: 0; z-index: 0; }
 .hero-v-video,
 .hero-v-video video,
@@ -526,39 +528,59 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   height: 100%;
   object-fit: cover;
 }
-/* CSS-туман — виден, пока нет ролика (или если он не загрузился) */
+/* лёгкий зум кадра: чуть плотнее композиция + правый-нижний угол (где был знак)
+   уходит к тёмной кромке */
+.hero-v-video video,
+.hero-v-video canvas {
+  transform: scale(1.06);
+  transform-origin: 46% 42%;
+}
+/* Тёмный холодный фон — виден, пока грузится ролик (и если он не загрузился),
+   так что светлый текст читается всегда. */
 .hero-mist {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(120% 80% at 78% 8%, #eaf1f6 0%, rgba(234,241,246,0) 55%),
-    radial-gradient(120% 90% at 12% 96%, #cdd9e2 0%, rgba(205,217,226,0) 60%),
-    linear-gradient(180deg, #dbe6ee 0%, #c3d1dc 46%, #aebfcc 100%);
+    radial-gradient(120% 80% at 72% 12%, #26333f 0%, rgba(38,51,63,0) 55%),
+    radial-gradient(120% 90% at 14% 96%, #0d151e 0%, rgba(13,21,30,0) 60%),
+    linear-gradient(180deg, #1a2530 0%, #131d27 48%, #0b131b 100%);
 }
 .hero-mist::after {
   content: "";
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(60% 40% at 30% 30%, rgba(255,255,255,0.55), transparent 70%),
-    radial-gradient(50% 34% at 72% 62%, rgba(255,255,255,0.4), transparent 72%);
+    radial-gradient(52% 36% at 32% 34%, rgba(150,178,200,0.20), transparent 70%),
+    radial-gradient(46% 30% at 74% 66%, rgba(120,150,175,0.16), transparent 72%);
   mix-blend-mode: screen;
   animation: mistdrift 26s var(--e-inout) infinite alternate;
 }
 @keyframes mistdrift {
-  0%   { transform: translate3d(-2%, 0, 0) scale(1.05); opacity: 0.85; }
+  0%   { transform: translate3d(-2%, 0, 0) scale(1.05); opacity: 0.7; }
   100% { transform: translate3d(3%, -2%, 0) scale(1.14); opacity: 1; }
 }
-/* лёгкое затемнение для читаемости светлых элементов поверх видео */
+/* Затемнение: темнее сверху (для меню над светлым небом), деликатное свечение
+   вокруг центра (заголовок) и темнее снизу (CTA + отметка). */
 .hero-v-scrim {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(240,245,249,0.35) 0%, rgba(240,245,249,0) 24%),
-    linear-gradient(0deg, rgba(20,30,42,0.30) 0%, rgba(20,30,42,0) 42%);
+    radial-gradient(86% 58% at 50% 45%, rgba(6,12,20,0.30) 0%, rgba(6,12,20,0) 66%),
+    linear-gradient(180deg,
+      rgba(8,14,22,0.58) 0%, rgba(8,14,22,0.12) 20%,
+      rgba(8,14,22,0.10) 55%, rgba(6,11,18,0.70) 100%);
+}
+/* Шумовая текстура — прячет мягкость 720p и место вычищенного знака. */
+.hero-v-noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 220px 220px;
 }
 
-/* ── навигация: стеклянная пилюля справа, логотип слева ── */
+/* ── навигация: тёмное стекло справа, логотип слева ── */
 .hero-nav {
   position: relative;
   z-index: 3;
@@ -573,39 +595,40 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   font-size: 1.35rem;
   letter-spacing: 0.36em;
   padding-left: 0.36em;
-  color: #12191f;
+  color: #f3f7fa;
+  text-shadow: 0 2px 24px rgba(4, 10, 18, 0.5);
 }
 .hero-pill {
   display: flex;
   align-items: center;
-  gap: clamp(6px, 1vw, 20px);
+  gap: clamp(6px, 1vw, 18px);
   padding: 7px 8px 7px clamp(14px, 1.4vw, 24px);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(16px) saturate(1.1);
-  -webkit-backdrop-filter: blur(16px) saturate(1.1);
-  box-shadow: 0 10px 40px -18px rgba(18, 30, 45, 0.5);
+  background: rgba(14, 21, 30, 0.34);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 12px 40px -20px rgba(0, 0, 0, 0.7);
 }
 .hero-pill-link {
   font-size: 0.92rem;
   font-weight: 500;
   letter-spacing: 0.01em;
-  color: #29323c;
-  padding: 6px 10px;
+  color: rgba(233, 239, 244, 0.86);
+  padding: 6px 12px;
   border-radius: 999px;
   transition: color 0.3s var(--e-out), background 0.3s var(--e-out);
 }
-.hero-pill-link:hover { color: #0d1319; background: rgba(255,255,255,0.6); }
+.hero-pill-link:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
 .hero-pill-cta {
   font-size: 0.92rem;
-  font-weight: 600;
-  color: #f3f7fa;
-  background: #17202a;
+  font-weight: 700;
+  color: #0c1319;
+  background: #eef3f7;
   padding: 9px 20px;
   border-radius: 999px;
   transition: transform 0.35s var(--e-out), background 0.35s var(--e-out);
 }
-.hero-pill-cta:hover { background: var(--ice-ink); transform: translateY(-1px); }
+.hero-pill-cta:hover { background: #cfe0ee; transform: translateY(-1px); }
 
 /* ── центральный заголовок ── */
 .hero-v-copy {
@@ -624,15 +647,16 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .hero-v-title {
   font-family: var(--f-display);
   font-weight: 700;
-  font-size: clamp(3rem, 1rem + 7vw, 8.2rem);
+  font-size: clamp(3rem, 1rem + 7vw, 8.4rem);
   line-height: 0.95;
   letter-spacing: -0.035em;
-  color: #141c25;
+  color: #f4f8fb;
+  text-shadow: 0 3px 60px rgba(4, 10, 18, 0.55), 0 1px 3px rgba(4, 10, 18, 0.35);
 }
 .hero-v-title .line { display: block; overflow: hidden; }
 .hero-v-title .line + .line { padding-top: 0.02em; }
 .hero-v-key {
-  color: var(--ice-ink);
+  color: #a9cee9;
   font-style: normal;
 }
 .hero-v-sub {
@@ -640,7 +664,8 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   max-width: 40ch;
   font-size: clamp(1rem, 0.9rem + 0.4vw, 1.28rem);
   line-height: 1.5;
-  color: #33404c;
+  color: rgba(228, 236, 242, 0.9);
+  text-shadow: 0 1px 20px rgba(4, 10, 18, 0.5);
 }
 
 /* ── низ слева: метка + текст + кнопки ── */
@@ -659,19 +684,20 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   font-size: var(--fs-micro);
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: #1e2830;
+  color: rgba(226, 235, 242, 0.92);
   margin-bottom: 0.9em;
 }
 .hero-v-cta-dot {
   width: 7px; height: 7px;
   border-radius: 50%;
-  background: var(--ice-ink);
-  box-shadow: 0 0 0 4px rgba(63, 111, 146, 0.18);
+  background: #a9cee9;
+  box-shadow: 0 0 0 4px rgba(169, 206, 233, 0.16), 0 0 14px rgba(169, 206, 233, 0.5);
 }
 .hero-v-cta-text {
   font-size: 1rem;
   line-height: 1.5;
-  color: #303c48;
+  color: rgba(222, 231, 238, 0.86);
+  text-shadow: 0 1px 16px rgba(4, 10, 18, 0.5);
   margin-bottom: 1.5em;
 }
 .hero-v-cta-row {
@@ -681,21 +707,22 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 }
 .btn-fill {
   font-size: 0.98rem;
-  font-weight: 600;
-  color: #f4f8fb;
-  background: #17202a;
+  font-weight: 700;
+  color: #0c1319;
+  background: #eef3f7;
   padding: 14px 28px;
   border-radius: 999px;
   transition: transform 0.4s var(--e-out), background 0.4s var(--e-out);
 }
-.btn-fill:hover { background: var(--ice-ink); transform: translateY(-2px); }
+.btn-fill:hover { background: #cfe0ee; transform: translateY(-2px); }
 .btn-text {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   font-size: 0.98rem;
   font-weight: 500;
-  color: #1c2530;
+  color: #eef3f7;
+  text-shadow: 0 1px 16px rgba(4, 10, 18, 0.5);
 }
 .btn-text span { transition: transform 0.35s var(--e-out); }
 .btn-text:hover span { transform: translateY(3px); }
@@ -709,7 +736,8 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   font-family: var(--f-mono);
   font-size: 0.82rem;
   letter-spacing: 0.16em;
-  color: #223040;
+  color: rgba(210, 222, 232, 0.82);
+  text-shadow: 0 1px 16px rgba(4, 10, 18, 0.5);
   text-align: right;
 }
 

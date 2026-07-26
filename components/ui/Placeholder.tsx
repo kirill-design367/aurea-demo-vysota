@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /*
   Кадр под фото. Если src есть и грузится — показываем фото (с плавным
@@ -25,22 +25,36 @@ export default function Placeholder({
 }) {
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
   // Абсолютные /work/... не получают basePath автоматически (это не next/image),
   // поэтому под GitHub Pages (подпапка) префиксуем вручную.
   const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
   const resolvedSrc = src ? base + src : undefined;
   const showImg = !!resolvedSrc && !failed;
 
+  // Если фото уже в кэше и загрузилось до навешивания onLoad (частый случай при
+  // гидратации SSR), событие load не сработает — проверяем complete вручную.
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img) return;
+    if (img.complete) {
+      if (img.naturalWidth > 0) setLoaded(true);
+      else setFailed(true);
+    }
+  }, [resolvedSrc]);
+
   return (
     <div className="ph">
       {showImg && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
+          ref={imgRef}
           src={resolvedSrc}
           alt={label}
           loading="eager"
           onLoad={() => setLoaded(true)}
           onError={() => setFailed(true)}
+          className="ph-img"
           style={{
             position: "absolute",
             inset: 0,
@@ -49,7 +63,7 @@ export default function Placeholder({
             objectFit: "cover",
             objectPosition: pos,
             opacity: loaded ? 1 : 0,
-            transition: "opacity 0.8s cubic-bezier(0.16,1,0.3,1)",
+            transition: "opacity 0.9s cubic-bezier(0.16,1,0.3,1)",
           }}
         />
       )}

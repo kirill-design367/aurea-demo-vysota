@@ -46,6 +46,13 @@ function Shot({
           scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: true },
         }
       );
+      // Проявление маской: кадр раскрывается снизу вверх при входе в вид.
+      gsap.from(el.querySelector(".ph"), {
+        clipPath: "inset(100% 0% 0% 0%)",
+        duration: 1.3,
+        ease: "power4.out",
+        scrollTrigger: { trigger: el, start: "top 84%", once: true },
+      });
     },
     { scope: root }
   );

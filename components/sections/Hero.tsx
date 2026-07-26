@@ -13,7 +13,13 @@ import { HERO, NAV } from "@/lib/content";
   слева блок-CTA, справа отметка высоты. Пока файла видео нет — сзади холодный
   CSS-туман (.hero-mist), так что кадр целостен и без ролика.
 */
-const HERO_VIDEO = (process.env.NEXT_PUBLIC_BASE_PATH || "") + "/video/hero.mp4";
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH || "";
+// webm (VP9) первым — легче и декодируется везде, где нет H.264; mp4 (H.264) —
+// универсальный фолбэк для Safari. Знак-звёздочка генератора вычищен из пикселей.
+const HERO_SOURCES = [
+  { src: BASE + "/video/hero.webm", type: "video/webm" },
+  { src: BASE + "/video/hero.mp4", type: "video/mp4" },
+];
 
 export default function Hero() {
   const root = useRef<HTMLElement>(null);
@@ -50,8 +56,9 @@ export default function Hero() {
     <section className="hero-v" id="top" ref={root} style={{ visibility: "hidden" }}>
       <div className="hero-v-bg" aria-hidden="true">
         <div className="hero-mist" />
-        <BoomerangVideoBg src={HERO_VIDEO} className="hero-v-video" />
+        <BoomerangVideoBg sources={HERO_SOURCES} className="hero-v-video" />
         <div className="hero-v-scrim" />
+        <div className="hero-v-noise" />
       </div>
 
       <header className="hero-nav">

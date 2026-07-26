@@ -12,16 +12,18 @@ import { useEffect, useRef, useState } from "react";
   виден CSS-фон (холодный туман). Как только положить ролик в /public/video —
   он подхватится и оживёт.
 */
-type Props = { src: string; className?: string };
+type Source = { src: string; type: string };
+type Props = { sources: Source[]; className?: string };
 
 const MAX_FRAMES = 260; // защита от OOM на длинном ролике
 
-export default function BoomerangVideoBg({ src, className }: Props) {
+export default function BoomerangVideoBg({ sources, className }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const displayCanvasRef = useRef<HTMLCanvasElement>(null);
   const [framesReady, setFramesReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const framesRef = useRef<HTMLCanvasElement[]>([]);
+  const srcKey = sources.map((s) => s.src).join("|");
 
   useEffect(() => {
     const video = videoRef.current;
@@ -103,7 +105,8 @@ export default function BoomerangVideoBg({ src, className }: Props) {
       video.removeEventListener("ended", onEnded);
       video.removeEventListener("error", onError);
     };
-  }, [src]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [srcKey]);
 
   useEffect(() => {
     if (!framesReady) return;
@@ -149,12 +152,15 @@ export default function BoomerangVideoBg({ src, className }: Props) {
     <div className={className ?? "video-bg"} aria-hidden="true">
       <video
         ref={videoRef}
-        src={src}
         style={{ display: framesReady ? "none" : "block" }}
         muted
         playsInline
         preload="auto"
-      />
+      >
+        {sources.map((s) => (
+          <source key={s.src} src={s.src} type={s.type} />
+        ))}
+      </video>
       <canvas ref={displayCanvasRef} style={{ display: framesReady ? "block" : "none" }} />
     </div>
   );

@@ -1,29 +1,40 @@
-import { Onest, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
+import { JetBrains_Mono } from "next/font/google";
 
 /*
-  Типографика ВЫСОТА v4 — под новый видео-hero в духе Neue Haas Grotesk.
-  Neue Haas без кириллицы, поэтому берём близкий по духу гротеск с полной
-  кириллицей (Ё, заглавные проверены):
+  Типографика ВЫСОТА v5 — TT Norms Pro (лицензионный, загружен клиентом).
+  Полная кириллица во всех начертаниях (Ё/ё проверены, 220 глифов). Чистый
+  плотный нео-гротеск в духе Neue Haas — держит отрицательный трекинг в
+  крупных заголовках и остаётся читаемым в мелком кегле. Заголовки и текст —
+  одно семейство, разные веса. Отметки высоты — моноширинный JetBrains Mono.
 
-  — Onest: чистый плотный нео-гротеск, отлично держит отрицательный трекинг в
-    заголовках и читаемый в мелком кегле. Латиница + кириллица. Заголовки и текст.
-  — JetBrains Mono: приборный моноширинный — отметки высоты.
-
-  Платный апгрейд под Neue Haas (если захотите загрузить): TT Norms Pro или
-  Suisse Int'l — оба с кириллицей, точнее по характеру.
+  Self-hosted через next/font/local (woff2 в app/fonts/), без внешних запросов.
+  src должен быть литералом — next/font анализирует его статически.
 */
-export const display = Onest({
-  subsets: ["latin", "cyrillic"],
-  weight: ["500", "600", "700", "800"],
+export const display = localFont({
+  src: [
+    { path: "./fonts/TTNormsPro-Light.woff2", weight: "300", style: "normal" },
+    { path: "./fonts/TTNormsPro-Regular.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/TTNormsPro-Medium.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/TTNormsPro-Bold.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/TTNormsPro-ExtraBold.woff2", weight: "800", style: "normal" },
+  ],
   variable: "--font-display",
   display: "swap",
+  fallback: ["Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
 });
 
-export const body = Onest({
-  subsets: ["latin", "cyrillic"],
-  weight: ["400", "500", "600"],
+export const body = localFont({
+  src: [
+    { path: "./fonts/TTNormsPro-Light.woff2", weight: "300", style: "normal" },
+    { path: "./fonts/TTNormsPro-Regular.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/TTNormsPro-Medium.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/TTNormsPro-Bold.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/TTNormsPro-ExtraBold.woff2", weight: "800", style: "normal" },
+  ],
   variable: "--font-body",
   display: "swap",
+  fallback: ["Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
 });
 
 export const mono = JetBrains_Mono({

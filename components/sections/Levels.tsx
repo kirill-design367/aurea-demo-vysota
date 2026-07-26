@@ -40,6 +40,13 @@ function HouseBlock({ house, from, flip }: { house: House; from: number; flip: b
           scrollTrigger: { trigger: el, start: "top bottom", end: "top 30%", scrub: true },
         }
       );
+      // Проявление маской: кадр «поднимается» снизу вверх при входе в вид.
+      gsap.from(el.querySelector(".ph"), {
+        clipPath: "inset(100% 0% 0% 0%)",
+        duration: 1.3,
+        ease: "power4.out",
+        scrollTrigger: { trigger: el, start: "top 82%", once: true },
+      });
 
       // Отметка высоты «спускается» с предыдущего уровня к этому.
       const obj = { v: from };
