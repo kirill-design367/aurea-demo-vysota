@@ -20,15 +20,17 @@
   --muted: #6f8394;      /* третичный / метки */
   --alpenglow: #e7a97e;  /* тёплый акцент (рассвет/закат) */
   --gold: #d8a15c;
+  --ice: #7ea8c9;        /* холодный ледниковый акцент (свечения на тёмном) */
+  --ice-ink: #3f6f92;    /* тот же холод, но плотный — для текста на светлом */
   --line: rgba(159, 180, 196, 0.16);
   --line-2: rgba(159, 180, 196, 0.30);
 
-  /* Акцент — одной переменной. По умолчанию альпенгло. */
-  --accent: var(--alpenglow);
+  /* Акцент — одной переменной. Под видео-hero — холодный лёд. */
+  --accent: var(--ice);
 
   /* ── Типографика ── */
-  --f-display: var(--font-display), "Playfair Display", Georgia, serif;
-  --f-body: var(--font-body), Georgia, "Times New Roman", serif;
+  --f-display: var(--font-display), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --f-body: var(--font-body), "Helvetica Neue", Helvetica, Arial, sans-serif;
   --f-mono: var(--font-mono), ui-monospace, "SF Mono", monospace;
 
   /* Шкала (клэмпы — крупно и с воздухом) */
@@ -281,7 +283,12 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   width: 1px;
   pointer-events: none;
   color: var(--frost);
+  /* Прибор появляется, когда начинается спуск (за пределами hero-кадра). */
+  opacity: 0;
+  transform: translateX(14px);
+  transition: opacity 0.7s var(--e-out), transform 0.7s var(--e-out);
 }
+.rail.is-on { opacity: 1; transform: none; }
 .rail-readout {
   position: absolute;
   top: clamp(22px, 2.6vw, 40px);
@@ -326,7 +333,7 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   width: 8px; height: 8px;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 0 4px rgba(231,169,126,0.14), 0 0 22px var(--accent);
+  box-shadow: 0 0 0 4px rgba(126,168,201,0.16), 0 0 22px var(--accent);
   will-change: transform;
   z-index: 3;
 }
@@ -497,82 +504,213 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   background: var(--accent);
 }
 
-/* ═══ HERO — лесенка ВЫСОТА по восходящей диагонали ════════════════════════ */
-.hero {
+/* ═══ HERO — видео-кадр во весь экран (бумеранг-фон) ═══════════════════════
+   Палитра кадра — холодная горная: светлый туман, графитовый текст, ледяной
+   акцент на ключевом слове. Стеклянная навигация, снизу CTA и отметка высоты. */
+.hero-v {
   position: relative;
   min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: clamp(80px, 12vh, 150px) clamp(140px, 14vw, 260px) clamp(80px, 12vh, 150px) var(--gutter);
+  overflow: hidden;
+  isolation: isolate;
+  color: #1b232d;                 /* графит — базовый текст кадра */
 }
-.hero-stair {
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  gap: clamp(2px, 0.5vw, 10px);
-  padding-bottom: 9vh;
-}
-.step {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  /* восходящая диагональ: каждая следующая буква выше предыдущей */
-  transform: translateY(calc(var(--i) * -6.6vh));
-}
-.step-alt {
-  font-family: var(--f-mono);
-  font-size: clamp(0.58rem, 0.48rem + 0.3vw, 0.8rem);
-  letter-spacing: 0.16em;
-  color: var(--accent);
-  margin-bottom: 0.5em;
-  padding-left: 0.12em;
-  white-space: nowrap;
-}
-.step-alt i { font-style: normal; color: var(--muted); margin-left: 0.3em; }
-.step-inner { display: block; overflow: hidden; padding-top: 0.08em; }
-.step-ch {
-  display: block;
-  font-family: var(--f-display);
-  font-weight: 400;
-  font-size: clamp(3.6rem, 1.5rem + 8.4vw, 11.5rem);
-  line-height: 0.8;
-  letter-spacing: -0.005em;
-  color: var(--frost);
-  will-change: transform;
-}
-.hero-sub {
+
+/* ── фон: видео + холодный CSS-туман под ним + затемняющий скрим ── */
+.hero-v-bg { position: absolute; inset: 0; z-index: 0; }
+.hero-v-video,
+.hero-v-video video,
+.hero-v-video canvas {
   position: absolute;
-  right: clamp(150px, 15vw, 280px);
-  bottom: clamp(40px, 8vh, 90px);
-  max-width: 32ch;
-  text-align: right;
-  font-size: var(--fs-1);
-  line-height: 1.55;
-  color: var(--frost-dim);
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
-.hero-cue {
+/* CSS-туман — виден, пока нет ролика (или если он не загрузился) */
+.hero-mist {
   position: absolute;
-  left: var(--gutter);
-  bottom: clamp(28px, 5vh, 52px);
+  inset: 0;
+  background:
+    radial-gradient(120% 80% at 78% 8%, #eaf1f6 0%, rgba(234,241,246,0) 55%),
+    radial-gradient(120% 90% at 12% 96%, #cdd9e2 0%, rgba(205,217,226,0) 60%),
+    linear-gradient(180deg, #dbe6ee 0%, #c3d1dc 46%, #aebfcc 100%);
+}
+.hero-mist::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(60% 40% at 30% 30%, rgba(255,255,255,0.55), transparent 70%),
+    radial-gradient(50% 34% at 72% 62%, rgba(255,255,255,0.4), transparent 72%);
+  mix-blend-mode: screen;
+  animation: mistdrift 26s var(--e-inout) infinite alternate;
+}
+@keyframes mistdrift {
+  0%   { transform: translate3d(-2%, 0, 0) scale(1.05); opacity: 0.85; }
+  100% { transform: translate3d(3%, -2%, 0) scale(1.14); opacity: 1; }
+}
+/* лёгкое затемнение для читаемости светлых элементов поверх видео */
+.hero-v-scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(240,245,249,0.35) 0%, rgba(240,245,249,0) 24%),
+    linear-gradient(0deg, rgba(20,30,42,0.30) 0%, rgba(20,30,42,0) 42%);
+}
+
+/* ── навигация: стеклянная пилюля справа, логотип слева ── */
+.hero-nav {
+  position: relative;
+  z-index: 3;
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
+  padding: clamp(22px, 3vh, 40px) var(--gutter) 0;
+}
+.hero-logo {
+  font-family: var(--f-display);
+  font-weight: 700;
+  font-size: 1.35rem;
+  letter-spacing: 0.36em;
+  padding-left: 0.36em;
+  color: #12191f;
+}
+.hero-pill {
+  display: flex;
+  align-items: center;
+  gap: clamp(6px, 1vw, 20px);
+  padding: 7px 8px 7px clamp(14px, 1.4vw, 24px);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  box-shadow: 0 10px 40px -18px rgba(18, 30, 45, 0.5);
+}
+.hero-pill-link {
+  font-size: 0.92rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: #29323c;
+  padding: 6px 10px;
+  border-radius: 999px;
+  transition: color 0.3s var(--e-out), background 0.3s var(--e-out);
+}
+.hero-pill-link:hover { color: #0d1319; background: rgba(255,255,255,0.6); }
+.hero-pill-cta {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #f3f7fa;
+  background: #17202a;
+  padding: 9px 20px;
+  border-radius: 999px;
+  transition: transform 0.35s var(--e-out), background 0.35s var(--e-out);
+}
+.hero-pill-cta:hover { background: var(--ice-ink); transform: translateY(-1px); }
+
+/* ── центральный заголовок ── */
+.hero-v-copy {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding-inline: var(--gutter);
+  pointer-events: none;
+}
+.hero-v-title-wrap { overflow: visible; }
+.hero-v-title {
+  font-family: var(--f-display);
+  font-weight: 700;
+  font-size: clamp(3rem, 1rem + 7vw, 8.2rem);
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+  color: #141c25;
+}
+.hero-v-title .line { display: block; overflow: hidden; }
+.hero-v-title .line + .line { padding-top: 0.02em; }
+.hero-v-key {
+  color: var(--ice-ink);
+  font-style: normal;
+}
+.hero-v-sub {
+  margin-top: clamp(18px, 2.4vh, 30px);
+  max-width: 40ch;
+  font-size: clamp(1rem, 0.9rem + 0.4vw, 1.28rem);
+  line-height: 1.5;
+  color: #33404c;
+}
+
+/* ── низ слева: метка + текст + кнопки ── */
+.hero-v-cta {
+  position: absolute;
+  left: var(--gutter);
+  bottom: clamp(30px, 5vh, 56px);
+  z-index: 3;
+  max-width: 34ch;
+}
+.hero-v-cta-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--f-mono);
   font-size: var(--fs-micro);
-  letter-spacing: 0.24em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--frost-dim);
-  white-space: nowrap;
+  color: #1e2830;
+  margin-bottom: 0.9em;
 }
-.hero-cue-arrow {
-  color: var(--accent);
-  animation: cuebob 2.2s var(--e-inout) infinite;
+.hero-v-cta-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--ice-ink);
+  box-shadow: 0 0 0 4px rgba(63, 111, 146, 0.18);
 }
-@keyframes cuebob {
-  0%, 100% { transform: translateY(0); opacity: 0.55; }
-  50% { transform: translateY(5px); opacity: 1; }
+.hero-v-cta-text {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #303c48;
+  margin-bottom: 1.5em;
+}
+.hero-v-cta-row {
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 1.6vw, 28px);
+}
+.btn-fill {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: #f4f8fb;
+  background: #17202a;
+  padding: 14px 28px;
+  border-radius: 999px;
+  transition: transform 0.4s var(--e-out), background 0.4s var(--e-out);
+}
+.btn-fill:hover { background: var(--ice-ink); transform: translateY(-2px); }
+.btn-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.98rem;
+  font-weight: 500;
+  color: #1c2530;
+}
+.btn-text span { transition: transform 0.35s var(--e-out); }
+.btn-text:hover span { transform: translateY(3px); }
+
+/* ── низ справа: отметка высоты ── */
+.hero-v-alt {
+  position: absolute;
+  right: var(--gutter);
+  bottom: clamp(30px, 5vh, 56px);
+  z-index: 3;
+  font-family: var(--f-mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.16em;
+  color: #223040;
+  text-align: right;
 }
 
 /* ═══ MANIFESTO ═══════════════════════════════════════════════════════════ */

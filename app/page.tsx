@@ -1,6 +1,5 @@
 import SmoothScroll from "@/components/SmoothScroll";
 import Scene from "@/components/Scene";
-import Nav from "@/components/Nav";
 import Hero from "@/components/sections/Hero";
 import Manifesto from "@/components/sections/Manifesto";
 import Levels from "@/components/sections/Levels";
@@ -13,7 +12,6 @@ export default function Page() {
   return (
     <SmoothScroll>
       <Scene />
-      <Nav />
 
       <main>
         <Hero />

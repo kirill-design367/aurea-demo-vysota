@@ -53,6 +53,7 @@ function Layer({ src, cls }: { src: string; cls: string }) {
 
 export default function Scene() {
   const root = useRef<HTMLDivElement>(null);
+  const railRef = useRef<HTMLElement>(null);
   const altRef = useRef<HTMLSpanElement>(null);
   const todRef = useRef<HTMLSpanElement>(null);
   const caretRef = useRef<HTMLDivElement>(null);
@@ -72,11 +73,14 @@ export default function Scene() {
       registerGsap();
 
       let trackH = 0;
+      let heroExit = 0.12; // доля скролла, после которой уходит hero и появляется прибор
       const measure = () => {
         const track = caretRef.current?.parentElement;
         trackH = track ? track.clientHeight : 0;
         // Позиции разделов на шкале = их доля скролла.
         const max = document.documentElement.scrollHeight - window.innerHeight;
+        const hero = document.getElementById("top");
+        if (hero && max > 0) heroExit = Math.min(0.5, (hero.offsetHeight * 0.55) / max);
         MARKS.forEach((m, i) => {
           const sec = document.getElementById(m.id);
           const btn = markRefs.current[i];
@@ -95,6 +99,8 @@ export default function Scene() {
       let lastAlt = -1;
       let activeMark = -2;
       const updateRail = (p: number) => {
+        // Прибор появляется, когда уходит hero-кадр (светлый видеофон).
+        railRef.current?.classList.toggle("is-on", p > heroExit);
         const alt = Math.round(SITE.altTop + (SITE.altBottom - SITE.altTop) * p);
         if (alt !== lastAlt) {
           if (altRef.current) altRef.current.textContent = fmt(alt);
@@ -197,7 +203,7 @@ export default function Scene() {
       </div>
 
       {/* ── Высотомер = навигация ── */}
-      <nav className="rail" aria-label="Навигация по высоте">
+      <nav className="rail" aria-label="Навигация по высоте" ref={railRef}>
         <div className="rail-readout">
           <div className="rail-alt">
             <span ref={altRef}>{fmt(SITE.altTop)}</span>

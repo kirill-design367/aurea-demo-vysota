@@ -1,22 +1,25 @@
-import { Yeseva_One, Literata, JetBrains_Mono } from "next/font/google";
+import { Onest, JetBrains_Mono } from "next/font/google";
 
 /*
-  Типографика ВЫСОТА v3 — характер вместо дефолта, кириллица проверена (Ё, заглавные).
+  Типографика ВЫСОТА v4 — под новый видео-hero в духе Neue Haas Grotesk.
+  Neue Haas без кириллицы, поэтому берём близкий по духу гротеск с полной
+  кириллицей (Ё, заглавные проверены):
 
-  — Yeseva One: благородная антиква с высоким контрастом штриха. Дисплей/заголовки.
-    Родная кириллица (Jovanny Lemonad). Не Cormorant, не «первая страница Google».
-  — Literata: книжная серифная с индивидуальностью, отрисована для экрана и
-    отлично читается в мелком кегле (описания, характеристики). Кириллица есть.
-  — JetBrains Mono: приборный моноширинный для отметок высоты и меток.
+  — Onest: чистый плотный нео-гротеск, отлично держит отрицательный трекинг в
+    заголовках и читаемый в мелком кегле. Латиница + кириллица. Заголовки и текст.
+  — JetBrains Mono: приборный моноширинный — отметки высоты.
+
+  Платный апгрейд под Neue Haas (если захотите загрузить): TT Norms Pro или
+  Suisse Int'l — оба с кириллицей, точнее по характеру.
 */
-export const display = Yeseva_One({
+export const display = Onest({
   subsets: ["latin", "cyrillic"],
-  weight: ["400"],
+  weight: ["500", "600", "700", "800"],
   variable: "--font-display",
   display: "swap",
 });
 
-export const body = Literata({
+export const body = Onest({
   subsets: ["latin", "cyrillic"],
   weight: ["400", "500", "600"],
   variable: "--font-body",
